@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Momentum Plan Tracker</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #212529;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        h1 {
+            margin: 0 0 5px 0;
+            font-size: 28px;
+            color: #1e1b4b;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .form-card, .table-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Responsive grid specifically for form inputs */
+        .form-inputs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .col-span-2 {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 768px) {
+            .col-span-2 {
+                grid-column: span 1;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #4b5563;
+        }
+
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: #fff;
+            outline: none;
+            min-width: 0; /* Prevents overflow in flex layouts */
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        }
+
+        .date-input-container {
+            display: flex;
+            gap: 5px;
+        }
+
+        .date-input-container input {
+            flex-grow: 1;
+        }
+
+        .btn-today {
+            background: #e0e7ff;
+            color: var(--primary);
+            border: 1px solid #c7d2fe;
+            padding: 0 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .btn-today:hover {
+            background: #c7d2fe;
+        }
+
+        /* Actions panel below inputs */
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 15px;
+        }
+
+        .btn-add {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-add:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-add:active {
+            transform: scale(0.98);
+        }
+
+        .btn-clear-all {
+            background-color: #fff;
+            color: #475569;
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-clear-all:hover {
+            background-color: #f1f5f9;
+            color: var(--danger);
+            border-color: #fca5a5;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            padding: 12px 16px;
+            font-weight: 600;
+            color: #475569;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-high { background-color: #fee2e2; color: #991b1b; }
+        .badge-medium { background-color: #fef3c7; color: #92400e; }
+        .badge-low { background-color: #e0f2fe; color: #0369a1; }
+
+        .status-select {
+            padding: 4px 8px;
+            font-size: 13px;
+            border-radius: 4px;
+        }
+
+        .row-done {
+            text-decoration: line-through;
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        .btn-delete {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid #fee2e2;
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-delete:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .time-left {
+            font-weight: 500;
+        }
+        .time-urgent { color: var(--danger); }
+        .time-safe { color: var(--success); }
+        .time-warning { color: var(--warning); }
+
+        /* Custom Modal Styling */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(15, 23, 42, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            padding: 24px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-content h3 {
+            margin: 0 0 10px 0;
+            color: #1e1b4b;
+            font-size: 18px;
+        }
+
+        .modal-content p {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 0 0 20px 0;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .btn-modal-cancel {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid var(--border-color);
+            padding: 8px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .btn-modal-cancel:hover {
+            background-color: #e2e8f0;
+        }
+
+        .btn-modal-confirm {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .btn-modal-confirm:hover {
+            background-color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>Momentum Plan Tracker</h1>
+            <div style="color: var(--text-muted); font-size: 14px;">Track macro project goals and daily routines side-by-side.</div>
+        </div>
+        <button class="btn-clear-all" onclick="openClearModal()">🧹 Clear Done Tasks</button>
+    </header>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Active Tasks</div>
+            <div class="stat-value" id="stat-total">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">In Progress</div>
+            <div class="stat-value" id="stat-progress" style="color: var(--warning);">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Completed</div>
+            <div class="stat-value" id="stat-completed" style="color: var(--success);">0</div>
+        </div>
+    </div>
+
+    <div class="form-card">
+        <form id="task-form" onsubmit="addTask(event)">
+            <div class="form-inputs-grid">
+                <div class="form-group col-span-2">
+                    <label for="task-name">Task Name / Routine</label>
+                    <input type="text" id="task-name" placeholder="e.g., Run model benchmarks, Push changes to git" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-cat">Category</label>
+                    <input type="text" id="task-cat" placeholder="e.g., Daily, Project, Exam" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-priority">Priority</label>
+                    <select id="task-priority">
+                        <option value="High">🔥 High</option>
+                        <option value="Medium">🟡 Medium</option>
+                        <option value="Low">🔵 Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="task-date">Target Date</label>
+                    <div class="date-input-container">
+                        <input type="date" id="task-date" required>
+                        <button type="button" class="btn-today" onclick="setTodayDate()" title="Set to Today">Today</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-add">Add Task</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-card">
+        <table id="task-table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Task Description</th>
+                    <th>Priority</th>
+                    <th>Deadline</th>
+                    <th>Status / Timeline</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="task-list">
+                <!-- Dynamic Content -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Custom Confirmation Modal (Replaces browser confirm dialog) -->
+<div id="clear-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+        <h3>Clear Completed Tasks?</h3>
+        <p>This will permanently delete all finished tasks from your tracker board. This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="closeClearModal()">Cancel</button>
+            <button class="btn-modal-confirm" onclick="confirmClearCompleted()">Clear Board</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let tasks = JSON.parse(localStorage.getItem('tracker_tasks_v2')) || [
+        { id: 1, name: 'Run Momentum tracker app offline', cat: 'Daily', priority: 'High', date: new Date().toISOString().split('T')[0], status: 'In Progress' }
+    ];
+
+    function setTodayDate() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('task-date').value = today;
+    }
+
+    // Set default category on page load
+    document.getElementById('task-cat').value = "Daily";
+
+    function updateStats() {
+        document.getElementById('stat-total').innerText = tasks.length;
+        document.getElementById('stat-progress').innerText = tasks.filter(t => t.status === 'In Progress').length;
+        document.getElementById('stat-completed').innerText = tasks.filter(t => t.status === 'Done').length;
+    }
+
+    function calculateTimeLeft(deadlineStr, status) {
+        if (status === 'Done') return '<span class="time-safe">✓ Completed</span>';
+        
+        const now = new Date();
+        const deadline = new Date(deadlineStr);
+        // Set deadline threshold to the very end of the target day (23:59:59)
+        deadline.setHours(23, 59, 59, 999);
+        
+        const diffTime = deadline - now;
+        
+        if (diffTime < 0) {
+            // Past the deadline day
+            const diffDays = Math.ceil(Math.abs(diffTime) / (1000 * 60 * 60 * 24));
+            return `<span class="time-urgent">⚠️ Delayed by ${diffDays} days</span>`;
+        }
+        
+        const totalHoursLeft = Math.floor(diffTime / (1000 * 60 * 60));
+        const diffDays = Math.floor(totalHoursLeft / 24);
+        
+        if (diffDays === 0) {
+            // Due today - calculate hours and minutes left in the day
+            const hours = totalHoursLeft % 24;
+            const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
+            return `<span class="time-urgent">⏳ ${hours}h ${minutes}m left today</span>`;
+        } else if (diffDays === 1) {
+            const hours = totalHoursLeft % 24;
+            return `<span class="time-warning">⏰ Tomorrow (${diffDays}d ${hours}h left)</span>`;
+        } else {
+            return `<span class="time-safe">${diffDays} days left</span>`;
+        }
+    }
+
+    function renderTasks() {
+        const list = document.getElementById('task-list');
+        list.innerHTML = '';
+
+        if (tasks.length === 0) {
+            list.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding: 30px;">No tasks on the horizon. Relax or add a new target!</td></tr>`;
+            updateStats();
+            return;
+        }
+
+        // Sorting priority: incomplete high priority first, completed ones pushed to the bottom
+        const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 };
+        tasks.sort((a, b) => {
+            if (a.status === 'Done' && b.status !== 'Done') return 1;
+            if (a.status !== 'Done' && b.status === 'Done') return -1;
+            return priorityOrder[a.priority] - priorityOrder[b.priority] || new Date(a.date) - new Date(b.date);
+        });
+
+        tasks.forEach(task => {
+            const tr = document.createElement('tr');
+            if (task.status === 'Done') tr.className = 'row-done';
+
+            const timeLeftHTML = calculateTimeLeft(task.date, task.status);
+
+            tr.innerHTML = `
+                <td><strong>${escapeHtml(task.cat)}</strong></td>
+                <td>${escapeHtml(task.name)}</td>
+                <td><span class="badge badge-${task.priority.toLowerCase()}">${task.priority}</span></td>
+                <td>${task.date}</td>
+                <td>
+                    <select class="status-select" onchange="changeStatus(${task.id}, this.value)">
+                        <option value="Not Started" ${task.status === 'Not Started' ? 'selected' : ''}>Not Started</option>
+                        <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                        <option value="Done" ${task.status === 'Done' ? 'selected' : ''}>Done</option>
+                    </select>
+                    <div class="timeline-display" data-date="${task.date}" data-status="${task.status}" style="font-size: 11px; margin-top: 4px;">${timeLeftHTML}</div>
+                </td>
+                <td>
+                    <button class="btn-delete" onclick="deleteTask(${task.id})">Delete</button>
+                </td>
+            `;
+            list.appendChild(tr);
+        });
+
+        localStorage.setItem('tracker_tasks_v2', JSON.stringify(tasks));
+        updateStats();
+    }
+
+    function addTask(e) {
+        e.preventDefault();
+        const name = document.getElementById('task-name').value;
+        const cat = document.getElementById('task-cat').value;
+        const priority = document.getElementById('task-priority').value;
+        const date = document.getElementById('task-date').value;
+
+        const newTask = {
+            id: Date.now(),
+            name,
+            cat,
+            priority,
+            date,
+            status: 'Not Started'
+        };
+
+        tasks.push(newTask);
+        renderTasks();
+        
+        // Reset inputs, preserving "Daily" default category
+        document.getElementById('task-name').value = '';
+        document.getElementById('task-cat').value = 'Daily';
+        document.getElementById('task-date').value = '';
+    }
+
+    function changeStatus(id, newStatus) {
+        tasks = tasks.map(t => t.id === id ? { ...t, status: newStatus } : t);
+        renderTasks();
+    }
+
+    function deleteTask(id) {
+        tasks = tasks.filter(t => t.id !== id);
+        renderTasks();
+    }
+
+    function updateLiveTimelines() {
+        document.querySelectorAll('.timeline-display').forEach(el => {
+            const date = el.getAttribute('data-date');
+            const status = el.getAttribute('data-status');
+            el.innerHTML = calculateTimeLeft(date, status);
+        });
+    }
+
+    // Modal Handlers
+    function openClearModal() {
+        document.getElementById('clear-modal').style.display = 'flex';
+    }
+
+    function closeClearModal() {
+        document.getElementById('clear-modal').style.display = 'none';
+    }
+
+    function confirmClearCompleted() {
+        tasks = tasks.filter(t => t.status !== 'Done');
+        renderTasks();
+        closeClearModal();
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    // Initial setup
+    setTodayDate();
+    renderTasks();
+
+    // Refresh time-left countdown every 30 seconds to keep the hours and minutes accurate
+    setInterval(updateLiveTimelines, 30000);
+</script>
+
+</body>
+</html>
