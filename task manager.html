@@ -42,6 +42,11 @@
             gap: 15px;
         }
 
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
         h1 {
             margin: 0 0 5px 0;
             font-size: 28px;
@@ -183,7 +188,7 @@
             transform: scale(0.98);
         }
 
-        .btn-clear-all {
+        .btn-clear-all, .btn-delete-all {
             background-color: #fff;
             color: #475569;
             border: 1px solid var(--border-color);
@@ -198,6 +203,12 @@
             background-color: #f1f5f9;
             color: var(--danger);
             border-color: #fca5a5;
+        }
+
+        .btn-delete-all:hover {
+            background-color: #fef2f2;
+            color: var(--danger);
+            border-color: var(--danger);
         }
 
         table {
@@ -362,7 +373,10 @@
             <h1>Momentum Plan Tracker</h1>
             <div style="color: var(--text-muted); font-size: 14px;">Track macro project goals and daily routines side-by-side.</div>
         </div>
-        <button class="btn-clear-all" onclick="openClearModal()">🧹 Clear Done Tasks</button>
+        <div class="header-actions">
+            <button class="btn-clear-all" onclick="openClearModal()">🧹 Clear Done Tasks</button>
+            <button class="btn-delete-all" onclick="openDeleteAllModal()">🗑️ Delete All</button>
+        </div>
     </header>
 
     <div class="stats-grid">
@@ -427,13 +441,11 @@
                 </tr>
             </thead>
             <tbody id="task-list">
-                <!-- Dynamic Content -->
-            </tbody>
+                </tbody>
         </table>
     </div>
 </div>
 
-<!-- Custom Confirmation Modal (Replaces browser confirm dialog) -->
 <div id="clear-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
         <h3>Clear Completed Tasks?</h3>
@@ -441,6 +453,17 @@
         <div class="modal-actions">
             <button class="btn-modal-cancel" onclick="closeClearModal()">Cancel</button>
             <button class="btn-modal-confirm" onclick="confirmClearCompleted()">Clear Board</button>
+        </div>
+    </div>
+</div>
+
+<div id="delete-all-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+        <h3>Delete All Tasks?</h3>
+        <p>This will completely wipe out your tracker board, removing all active, pending, and completed tasks. This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="closeDeleteAllModal()">Cancel</button>
+            <button class="btn-modal-confirm" onclick="confirmDeleteAll()">Delete Everything</button>
         </div>
     </div>
 </div>
@@ -587,7 +610,7 @@
         });
     }
 
-    // Modal Handlers
+    // Modal Handlers for Clear Completed
     function openClearModal() {
         document.getElementById('clear-modal').style.display = 'flex';
     }
@@ -600,6 +623,21 @@
         tasks = tasks.filter(t => t.status !== 'Done');
         renderTasks();
         closeClearModal();
+    }
+
+    // Modal Handlers for Delete All
+    function openDeleteAllModal() {
+        document.getElementById('delete-all-modal').style.display = 'flex';
+    }
+
+    function closeDeleteAllModal() {
+        document.getElementById('delete-all-modal').style.display = 'none';
+    }
+
+    function confirmDeleteAll() {
+        tasks = [];
+        renderTasks();
+        closeDeleteAllModal();
     }
 
     function escapeHtml(str) {
