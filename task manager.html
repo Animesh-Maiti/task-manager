@@ -81,7 +81,7 @@
             margin-top: 5px;
         }
 
-        /* NEW: Day-Wise Chart Card Framework */
+        /* Day-Wise Chart Card Framework */
         .chart-card {
             background: var(--card-bg);
             border-radius: 8px;
@@ -92,6 +92,9 @@
         }
 
         .chart-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-size: 15px;
             font-weight: 600;
             color: #1e1b4b;
@@ -132,8 +135,7 @@
         .chart-bar-fill {
             background: linear-gradient(180deg, #6366f1 0%, var(--primary) 100%);
             width: 100%;
-            height: 0%; /* Dynamic adjustment */
-            border-radius: 4px 4px 0 0;
+            height: 0%;
             transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -471,6 +473,7 @@
         </div>
     </header>
 
+    <!-- Stats Panel -->
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-label">Total Active Tasks</div>
@@ -486,8 +489,11 @@
         </div>
     </div>
 
+    <!-- Day-Wise Progress Chart Component -->
     <div class="chart-card">
-        <div class="chart-title">📅 Operational Performance (Day-by-Day Momentum)</div>
+        <div class="chart-title">
+            <span>📅 Operational Performance (Day-by-Day Momentum)</span>
+        </div>
         <div class="chart-container">
             <div class="chart-column" id="day-0"><span class="bar-label-percent">0%</span><div class="chart-bar-bg"><div class="chart-bar-fill"></div></div></div>
             <div class="chart-column" id="day-1"><span class="bar-label-percent">0%</span><div class="chart-bar-bg"><div class="chart-bar-fill"></div></div></div>
@@ -555,11 +561,13 @@
                 </tr>
             </thead>
             <tbody id="task-list">
-                </tbody>
+                <!-- Dynamic Content -->
+            </tbody>
         </table>
     </div>
 </div>
 
+<!-- Clear Completed Modal -->
 <div id="clear-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
         <h3>Clear Completed Tasks?</h3>
@@ -571,6 +579,7 @@
     </div>
 </div>
 
+<!-- Delete All Modal -->
 <div id="delete-all-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
         <h3>Delete All Tasks?</h3>
@@ -587,11 +596,13 @@
         { id: 1, name: 'Run Momentum tracker app offline', cat: 'Daily', priority: 'High', date: new Date().toISOString().split('T')[0], status: 'In Progress' }
     ];
 
-    // Daily Chart Storage Config (Mon=0, Tue=1 ... Sun=6)
     let dailyHistoryConfig = JSON.parse(localStorage.getItem('tracker_daily_history_v2')) || {
         currentWeekIdentifier: getWeekIdentifier(new Date()),
         dayScores: [0, 0, 0, 0, 0, 0, 0] 
     };
+
+    // Flag that prevents the chart calculations from running downward when explicitly erasing elements from the screen
+    let isClearingCompletedTasks = false;
 
     function setTodayDate() {
         const today = new Date().toISOString().split('T')[0];
@@ -608,7 +619,6 @@
         return `${d.getUTCFullYear()}-W${weekNo}`;
     }
 
-    // Normalized JS Day index tracking to force Monday = 0 up to Sunday = 6
     function getNormalizedDayIndex() {
         const nativeIndex = new Date().getDay(); 
         return nativeIndex === 0 ? 6 : nativeIndex - 1;
@@ -634,13 +644,16 @@
         document.getElementById('stat-progress').innerText = progressTasks;
         document.getElementById('stat-completed').innerText = completedTasks;
 
-        // Calculate and update today's dynamic performance index score 
         const todayIdx = getNormalizedDayIndex();
-        const liveTodayScore = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-        dailyHistoryConfig.dayScores[todayIdx] = liveTodayScore;
-        localStorage.setItem('tracker_daily_history_v2', JSON.stringify(dailyHistoryConfig));
 
-        // Render data changes visually across the layout chart matrix columns
+        // ONLY update the raw array score from task criteria if we are not currently clearing them out
+        if (!isClearingCompletedTasks) {
+            const liveTodayScore = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+            dailyHistoryConfig.dayScores[todayIdx] = liveTodayScore;
+            localStorage.setItem('tracker_daily_history_v2', JSON.stringify(dailyHistoryConfig));
+        }
+
+        // Render values to UI columns directly out of saved config array
         for(let i = 0; i < 7; i++) {
             const colElement = document.getElementById(`day-${i}`);
             const axisElement = document.getElementById(`axis-${i}`);
@@ -649,11 +662,9 @@
             
             const currentScore = dailyHistoryConfig.dayScores[i];
             
-            // Adjust visual metrics 
             barFill.style.height = `${currentScore}%`;
             percentageText.innerText = `${currentScore}%`;
 
-            // Highlight the active current calendar day column natively 
             if (i === todayIdx) {
                 colElement.classList.add('current-day');
                 axisElement.classList.add('current-day-label');
@@ -791,8 +802,18 @@
     }
 
     function confirmClearCompleted() {
+        // Step 1: Set our isolation bypass flag to true
+        isClearingCompletedTasks = true;
+
+        // Step 2: Clear completed elements from working state array
         tasks = tasks.filter(t => t.status !== 'Done');
+
+        // Step 3: Run full table re-render cycle
         renderTasks();
+
+        // Step 4: Turn bypass state back down to false safely
+        isClearingCompletedTasks = false;
+        
         closeClearModal();
     }
 
@@ -806,6 +827,9 @@
 
     function confirmDeleteAll() {
         tasks = [];
+        // Erase chart metrics as well if the user purges the entire log manually
+        dailyHistoryConfig.dayScores = [0, 0, 0, 0, 0, 0, 0];
+        localStorage.setItem('tracker_daily_history_v2', JSON.stringify(dailyHistoryConfig));
         renderTasks();
         closeDeleteAllModal();
     }
